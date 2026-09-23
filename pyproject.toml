@@ -7,10 +7,16 @@ name = "image-group"
 version = "0.1.0"
 description = "Offline child photo classifier for Windows"
 requires-python = ">=3.12,<3.13"
-dependencies = []
+dependencies = [
+  "numpy>=2,<3",
+  "opencv-python-headless>=4.10,<5",
+  "Pillow>=11,<13",
+  "psutil>=6,<8",
+  "PySide6-Essentials>=6.8,<7",
+]
 
 [project.optional-dependencies]
-dev = ["pytest>=9,<10", "ruff>=0.13,<1"]
+dev = ["pytest>=9,<10", "pytest-qt>=4.5,<5", "ruff>=0.13,<1", "pyinstaller>=6,<7"]
 
 [project.scripts]
 image-group = "image_group.app:main"
@@ -25,4 +31,3 @@ pythonpath = ["src"]
 [tool.ruff]
 target-version = "py312"
 line-length = 100
-

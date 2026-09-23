@@ -1,5 +1,4 @@
 import json
-import sqlite3
 import zipfile
 from pathlib import Path
 
