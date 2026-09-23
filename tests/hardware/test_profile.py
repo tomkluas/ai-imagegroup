@@ -1,4 +1,6 @@
 from image_group.hardware.profile import ConcurrencyPlanner, HardwareProfiler
+
+
 class FailingProbe:
     def cpu_count(self): raise OSError("blocked")
     def memory(self): raise OSError("blocked")

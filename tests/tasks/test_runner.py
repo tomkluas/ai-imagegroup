@@ -1,5 +1,8 @@
 from pathlib import Path
+
 from image_group.tasks.runner import TaskItem, TaskRunner
+
+
 class Processor:
     def __init__(self): self.calls = 0
     def recognize(self, path): self.calls += 1; return ["p1"]

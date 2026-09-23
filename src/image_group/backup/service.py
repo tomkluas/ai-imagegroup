@@ -1,6 +1,13 @@
 from __future__ import annotations
-import hashlib,json,shutil,tempfile,zipfile
-from pathlib import Path,PurePosixPath
+
+import hashlib
+import json
+import shutil
+import tempfile
+import zipfile
+from pathlib import Path, PurePosixPath
+
+
 class BackupError(ValueError):pass
 def digest(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 class BackupService:

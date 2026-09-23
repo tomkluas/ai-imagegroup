@@ -1,7 +1,10 @@
 from pathlib import Path
-from PIL import Image
-from image_group.photos.io import ImageDecodeError, ImageLoader
+
 import pytest
+from PIL import Image
+
+from image_group.photos.io import ImageDecodeError, ImageLoader
+
 
 def make_jpeg(path: Path, size=(1600, 1200), orientation=None):
     image = Image.new("RGB", size, (10, 20, 30))

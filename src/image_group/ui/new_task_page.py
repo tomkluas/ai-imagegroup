@@ -1,6 +1,20 @@
 from pathlib import Path
+
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QWidget,QVBoxLayout,QHBoxLayout,QLabel,QLineEdit,QPushButton,QListWidget,QListWidgetItem,QProgressBar,QFileDialog
+from PySide6.QtWidgets import (
+    QFileDialog,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QProgressBar,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
+
+
 class NewTaskPage(QWidget):
     def __init__(self, scanner, controller, people):
         super().__init__(); self.scanner,self.controller=scanner,controller; self.input_paths=[]; self.output_directory=None

@@ -1,7 +1,9 @@
 import numpy as np
+
 from image_group.domain.models import FaceDecision
 from image_group.recognition.base import DetectedFace
 from image_group.recognition.policy import DecisionPolicy, PolicyConfig
+
 
 def vector(x, y):
     value = np.array([x, y], np.float32); return value / np.linalg.norm(value)

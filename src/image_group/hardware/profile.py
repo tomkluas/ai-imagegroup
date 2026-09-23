@@ -1,6 +1,9 @@
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
+
 import psutil
+
+
 @dataclass(frozen=True, slots=True)
 class HardwareProfile:
     logical_cpus: int; total_memory_gb: int; available_memory_gb: int; fallback: bool

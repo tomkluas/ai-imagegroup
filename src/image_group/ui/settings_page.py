@@ -1,4 +1,6 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QComboBox, QPushButton
+from PySide6.QtWidgets import QComboBox, QLabel, QPushButton, QVBoxLayout, QWidget
+
+
 class SettingsPage(QWidget):
     def __init__(self, profiler):
         super().__init__(); self.profiler = profiler; layout = QVBoxLayout(self)

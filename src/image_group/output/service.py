@@ -1,6 +1,10 @@
 from __future__ import annotations
-import hashlib, os, shutil
+
+import hashlib
+import os
+import shutil
 from pathlib import Path
+
 
 class OutputService:
     def __init__(self, output_root: Path, person_names: dict[str, str]):

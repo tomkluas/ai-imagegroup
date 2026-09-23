@@ -1,8 +1,12 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
+
 import numpy as np
+
 from image_group.domain.models import FaceDecision
 from image_group.recognition.base import DetectedFace
+
 
 @dataclass(frozen=True, slots=True)
 class PolicyConfig:

@@ -1,0 +1,8 @@
+target-version = "py312"
+line-length = 100
+
+[lint]
+ignore = [
+  "BLE001", # UI/batch boundaries convert arbitrary decoder and filesystem failures into per-file errors.
+  "RUF046", # OpenCV scalar conversion is kept explicit for compatibility across NumPy/OpenCV versions.
+]

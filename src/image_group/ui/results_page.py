@@ -1,5 +1,15 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QWidget,QHBoxLayout,QVBoxLayout,QLabel,QListWidget,QListWidgetItem,QPushButton
+from PySide6.QtWidgets import (
+    QHBoxLayout,
+    QLabel,
+    QListWidget,
+    QListWidgetItem,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
+
+
 class ResultsPage(QWidget):
     def __init__(self, service):
         super().__init__(); self.service=service; self.task_id=None; layout=QVBoxLayout(self); layout.addWidget(QLabel("分类结果")); body=QHBoxLayout(); self.people_list=QListWidget(); self.photos_list=QListWidget(); body.addWidget(self.people_list,1); body.addWidget(self.photos_list,3); layout.addLayout(body); self.open_button=QPushButton("打开输出文件夹"); layout.addWidget(self.open_button); self.people_list.itemSelectionChanged.connect(self._person_changed)

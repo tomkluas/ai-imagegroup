@@ -1,8 +1,15 @@
 from pathlib import Path
+
 import cv2
 import numpy as np
 import pytest
-from image_group.recognition.opencv_backend import ModelIntegrityError, OpenCvRecognitionBackend, ReferenceValidationError
+
+from image_group.recognition.opencv_backend import (
+    ModelIntegrityError,
+    OpenCvRecognitionBackend,
+    ReferenceValidationError,
+)
+
 ROOT = Path(__file__).parents[2]; MODELS = ROOT / "resources" / "models"; LENA = ROOT / "tests" / "fixtures" / "lena.jpg"
 @pytest.fixture(scope="module")
 def backend(): return OpenCvRecognitionBackend(MODELS)

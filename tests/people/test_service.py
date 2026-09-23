@@ -1,9 +1,12 @@
 from dataclasses import dataclass
 from pathlib import Path
+
 import pytest
+
 from image_group.people.service import InvalidPersonNameError, PeopleService
 from image_group.storage.database import Database
 from image_group.storage.repositories import PersonRepository
+
 
 @dataclass(frozen=True)
 class AcceptedReference:

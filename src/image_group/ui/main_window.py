@@ -1,4 +1,14 @@
-from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QListWidget, QStackedWidget, QLabel, QVBoxLayout
+from PySide6.QtWidgets import (
+    QHBoxLayout,
+    QLabel,
+    QListWidget,
+    QMainWindow,
+    QStackedWidget,
+    QVBoxLayout,
+    QWidget,
+)
+
+
 class PlaceholderPage(QWidget):
     def __init__(self, title, text):
         super().__init__(); layout = QVBoxLayout(self); layout.addWidget(QLabel(title)); body = QLabel(text); body.setWordWrap(True); layout.addWidget(body); layout.addStretch()

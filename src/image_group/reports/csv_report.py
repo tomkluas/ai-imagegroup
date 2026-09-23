@@ -1,5 +1,6 @@
 import csv
 from pathlib import Path
+
 FIELDS=("source","sha256","person","decision","status","error","completed_at")
 def safe_cell(value):
     text="" if value is None else str(value)

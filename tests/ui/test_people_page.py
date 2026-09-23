@@ -1,9 +1,12 @@
 from dataclasses import dataclass
+
 from PySide6.QtCore import Qt
+
+from image_group.hardware.profile import HardwareProfile
 from image_group.ui.main_window import MainWindow
 from image_group.ui.people_page import PeoplePage
 from image_group.ui.settings_page import SettingsPage
-from image_group.hardware.profile import HardwareProfile
+
 
 @dataclass
 class Person: id: str; display_name: str

@@ -1,6 +1,17 @@
 from pathlib import Path
+
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QWidget,QVBoxLayout,QLabel,QListWidget,QListWidgetItem,QPushButton,QHBoxLayout
+from PySide6.QtWidgets import (
+    QHBoxLayout,
+    QLabel,
+    QListWidget,
+    QListWidgetItem,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
+
+
 class ReviewPage(QWidget):
     def __init__(self, controller):
         super().__init__(); self.controller=controller; self.face_id=None; layout=QVBoxLayout(self); layout.addWidget(QLabel("待人工确认")); self.photo_label=QLabel("暂无待确认照片"); layout.addWidget(self.photo_label)

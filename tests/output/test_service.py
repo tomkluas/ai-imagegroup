@@ -1,5 +1,6 @@
 from image_group.output.service import OutputService
 
+
 def test_group_photo_is_copied_once_per_distinct_person(tmp_path):
     source = tmp_path / "source" / "活动.jpg"; source.parent.mkdir(); source.write_bytes(b"photo")
     output = OutputService(tmp_path / "result", {"p1": "张小明", "p2": "李小红"})

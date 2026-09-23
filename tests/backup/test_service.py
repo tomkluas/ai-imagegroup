@@ -1,6 +1,11 @@
-import json,zipfile
+import json
+import zipfile
+
 import pytest
-from image_group.backup.service import BackupError,BackupService
+
+from image_group.backup.service import BackupError, BackupService
+
+
 def test_backup_round_trip(tmp_path):
     data=tmp_path/"data";data.mkdir();(data/"data.db").write_bytes(b"db");(data/"reference").mkdir();(data/"reference"/"a.jpg").write_bytes(b"photo")
     archive=BackupService(data).create(tmp_path/"backup.zip"); restored=tmp_path/"restored";BackupService(restored).restore(archive)

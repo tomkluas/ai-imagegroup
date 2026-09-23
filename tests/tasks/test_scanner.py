@@ -1,5 +1,5 @@
-from pathlib import Path
 from image_group.tasks.scanner import PhotoScanner
+
 
 def test_same_content_selected_by_two_paths_is_scanned_once(tmp_path):
     first = tmp_path / "a.jpg"; second = tmp_path / "b.jpg"

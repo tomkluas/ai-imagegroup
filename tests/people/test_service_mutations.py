@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 from pathlib import Path
+
 from image_group.people.service import PeopleService
 from image_group.storage.database import Database
 from image_group.storage.repositories import PersonRepository
+
 
 @dataclass(frozen=True)
 class Valid:

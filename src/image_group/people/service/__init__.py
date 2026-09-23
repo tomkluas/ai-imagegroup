@@ -1,12 +1,20 @@
 from __future__ import annotations
-import os, shutil
+
+import os
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 from uuid import uuid4
+
 from image_group.domain.models import Person, ReferencePhoto
 from image_group.storage.database import Database
-from image_group.storage.repositories import DuplicateNameError, PersonNotFoundError, PersonRepository, utc_now
+from image_group.storage.repositories import (
+    DuplicateNameError,
+    PersonNotFoundError,
+    PersonRepository,
+    utc_now,
+)
 
 RESERVED = {"CON", "PRN", "AUX", "NUL", *(f"COM{i}" for i in range(1, 10)), *(f"LPT{i}" for i in range(1, 10))}
 INVALID = set('<>:"/\\|?*')

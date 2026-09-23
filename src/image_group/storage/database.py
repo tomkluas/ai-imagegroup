@@ -6,7 +6,6 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
-
 SCHEMA_V1 = """
 CREATE TABLE people (
     id TEXT PRIMARY KEY,

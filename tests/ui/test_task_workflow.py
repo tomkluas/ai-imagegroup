@@ -1,8 +1,12 @@
 from pathlib import Path
+
 from PySide6.QtCore import Qt
+
 from image_group.ui.new_task_page import NewTaskPage
-from image_group.ui.review_page import ReviewPage
 from image_group.ui.results_page import ResultsPage
+from image_group.ui.review_page import ReviewPage
+
+
 class Scanner:
     def scan(self, paths): return type("Result", (), {"photos":[type("P", (), {"path": Path("a.jpg"), "size":12})()], "duplicates":[], "errors":[]})()
 class Controller:
