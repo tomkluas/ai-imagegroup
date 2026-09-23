@@ -1,0 +1,3 @@
+YuNet is distributed by OpenCV Zoo under the MIT License.
+SFace is distributed by OpenCV Zoo under the Apache License 2.0.
+Upstream notices and full license texts must be included in the release bundle.
