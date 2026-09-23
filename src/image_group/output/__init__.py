@@ -1,0 +1,2 @@
+"""Safe result materialization."""
+
