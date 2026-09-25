@@ -19,16 +19,23 @@ a = Analysis(
     binaries=pyside_binaries,
     datas=datas,
     hiddenimports=[
-        "PySide6.QtCore",
-        "PySide6.QtGui",
-        "PySide6.QtWidgets",
-        "cv2",
-        "numpy",
-        "PIL",
-        "psutil",
+        "PySide6.QtCore", "PySide6.QtGui", "PySide6.QtWidgets",
+        "cv2", "numpy", "PIL", "psutil",
     ],
     hookspath=[], hooksconfig={}, runtime_hooks=[], excludes=[], noarchive=False,
 )
 pyz = PYZ(a.pure)
-exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name="园区照片分类助手", debug=False, bootloader_ignore_signals=False, strip=False, upx=False, console=False)
-coll = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name="园区照片分类助手")
+exe = EXE(
+    pyz,
+    a.scripts,
+    a.binaries,
+    a.datas,
+    [],
+    exclude_binaries=False,
+    name="园区照片分类助手",
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=False,
+    console=False,
+)
