@@ -24,6 +24,12 @@ a = Analysis(
     ],
     hookspath=[], hooksconfig={}, runtime_hooks=[], excludes=[], noarchive=False,
 )
+
+# Qt for Windows uses the operating system ICU. A developer PATH can contain
+# unrelated Poppler ICU DLLs; bundling those produces entry-point error 127.
+foreign_icu = {"icuuc.dll", "icudt78.dll"}
+a.binaries = [entry for entry in a.binaries if Path(entry[0]).name.lower() not in foreign_icu]
+
 pyz = PYZ(a.pure)
 exe = EXE(
     pyz,
