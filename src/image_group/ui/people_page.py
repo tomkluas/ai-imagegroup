@@ -1,6 +1,7 @@
+from collections import deque
 from pathlib import Path
 
-from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtCore import QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import (
     QFileDialog,
@@ -23,10 +24,14 @@ from image_group.ui.thumbnails import AsyncThumbnailLoader, placeholder_pixmap
 class PeoplePage(QWidget):
     people_changed = Signal()
     thumbnail_size = QSize(160, 120)
+    batch_size = 24
+    batch_delay_ms = 8
 
     def __init__(self, service):
         super().__init__()
         self.service = service
+        self.reference_batch = deque()
+        self.reference_batch_generation = 0
         self.thumbnail_loader = AsyncThumbnailLoader(self)
         self.thumbnail_loader.loaded.connect(self._thumbnail_loaded)
         self.loading_pixmap = placeholder_pixmap(self.thumbnail_size, "正在加载")
@@ -152,18 +157,29 @@ class PeoplePage(QWidget):
 
     def _load_references(self):
         self.thumbnail_loader.begin_batch()
+        self.reference_batch_generation += 1
         self.references.clear()
         person_id = self._selected_id()
         if not person_id or not hasattr(self.service, "database"):
             return
-        rows = self.service.database.execute(
-            "SELECT id,managed_path FROM reference_photos "
-            "WHERE person_id=? ORDER BY created_at",
-            (person_id,),
+        self.reference_batch = deque(
+            self.service.database.execute(
+                "SELECT id,managed_path FROM reference_photos "
+                "WHERE person_id=? ORDER BY created_at",
+                (person_id,),
+            )
         )
-        for index, row in enumerate(rows):
+        generation = self.reference_batch_generation
+        QTimer.singleShot(0, lambda: self._append_reference_batch(generation))
+
+    def _append_reference_batch(self, generation):
+        if generation != self.reference_batch_generation:
+            return
+        for _ in range(min(self.batch_size, len(self.reference_batch))):
+            row = self.reference_batch.popleft()
             reference_id, value = row
             path = Path(value)
+            index = self.references.count()
             item = QListWidgetItem(QIcon(self.loading_pixmap), path.name)
             item.setData(Qt.UserRole, reference_id)
             item.setData(Qt.UserRole + 1, str(path))
@@ -171,6 +187,10 @@ class PeoplePage(QWidget):
             self.references.addItem(item)
             self.thumbnail_loader.request(
                 path, self.thumbnail_size, (index, reference_id, str(path))
+            )
+        if self.reference_batch:
+            QTimer.singleShot(
+                self.batch_delay_ms, lambda: self._append_reference_batch(generation)
             )
 
     def _thumbnail_loaded(self, request_key, image, available):

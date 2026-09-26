@@ -46,6 +46,7 @@ def test_review_confirms_selected_candidate(qtbot):
     assert controller.confirmed == ("f1", "p1")
 def test_results_loads_people_and_photos(qtbot):
     page = ResultsPage(Results()); qtbot.addWidget(page); page.select_task("t1"); page.select_person("p1")
+    qtbot.waitUntil(lambda: page.photos_list.count() == 2)
     assert page.people_list.count() == 1 and page.photos_list.count() == 2
 
 def test_results_shows_thumbnail_grid_and_placeholder_for_missing_photo(qtbot, tmp_path):
@@ -53,6 +54,7 @@ def test_results_shows_thumbnail_grid_and_placeholder_for_missing_photo(qtbot, t
     pixmap = QPixmap(40, 30); pixmap.fill(Qt.red); assert pixmap.save(str(existing))
     page = ResultsPage(Results([existing, tmp_path / "missing.png"])); qtbot.addWidget(page)
     page.select_task("t1"); page.select_person("p1")
+    qtbot.waitUntil(lambda: page.photos_list.count() == 2)
     assert page.photos_list.viewMode() == QListView.IconMode
     assert not page.photos_list.item(0).icon().isNull()
     assert not page.photos_list.item(1).icon().isNull()
@@ -66,12 +68,14 @@ def test_review_lists_pending_photos_and_confirms_selected_item(qtbot, tmp_path)
     ]
     controller = ReviewController(cases); page = ReviewPage(controller); qtbot.addWidget(page)
     page.load_next()
+    qtbot.waitUntil(lambda: page.reviews_list.count() == 2)
     assert page.reviews_list.count() == 2
     assert not page.reviews_list.item(0).icon().isNull()
     page.reviews_list.setCurrentRow(1)
     assert page.face_id == "f2" and page.candidates.item(0).data(Qt.UserRole) == "p2"
     qtbot.mouseClick(page.confirm_button, Qt.LeftButton)
     assert controller.confirmed == ("f2", "p2")
+    qtbot.waitUntil(lambda: page.reviews_list.count() == 1)
     assert page.reviews_list.count() == 1 and page.face_id == "f1"
 
 def test_results_returns_before_slow_thumbnail_decode_finishes(qtbot, monkeypatch, tmp_path):
@@ -83,7 +87,8 @@ def test_results_returns_before_slow_thumbnail_decode_finishes(qtbot, monkeypatc
     timer = threading.Timer(.3, release.set); timer.start()
     page = ResultsPage(Results([tmp_path / "large.jpg"])); qtbot.addWidget(page); page.select_task("t1")
     started = time.monotonic(); page.select_person("p1"); elapsed = time.monotonic() - started
-    assert elapsed < .15 and page.photos_list.count() == 1
+    assert elapsed < .15 and page.photos_list.count() == 0
+    qtbot.waitUntil(lambda: page.photos_list.count() == 1)
     release.set(); timer.join()
 
 def test_review_returns_before_slow_thumbnail_decode_finishes(qtbot, monkeypatch, tmp_path):
@@ -96,13 +101,15 @@ def test_review_returns_before_slow_thumbnail_decode_finishes(qtbot, monkeypatch
     timer = threading.Timer(.3, release.set); timer.start()
     page = ReviewPage(ReviewController(cases)); qtbot.addWidget(page)
     started = time.monotonic(); page.load_next(); elapsed = time.monotonic() - started
-    assert elapsed < .15 and page.reviews_list.count() == 1
+    assert elapsed < .15 and page.reviews_list.count() == 0
+    qtbot.waitUntil(lambda: page.reviews_list.count() == 1)
     release.set(); timer.join()
 
 def test_double_click_result_opens_original_image(qtbot, monkeypatch, tmp_path):
     path = tmp_path / "result.jpg"; opened = []
     monkeypatch.setattr(results_page_module, "open_image", lambda value, _parent: opened.append(Path(value)))
     page = ResultsPage(Results([path])); qtbot.addWidget(page); page.select_task("t1"); page.select_person("p1")
+    qtbot.waitUntil(lambda: page.photos_list.count() == 1)
     page.photos_list.itemDoubleClicked.emit(page.photos_list.item(0))
     assert opened == [path]
 
@@ -111,5 +118,22 @@ def test_double_click_review_opens_original_image(qtbot, monkeypatch, tmp_path):
     cases = [{"face_id":"f1", "photo_path":path, "box":[0,0,1,1], "candidates":[]}]
     monkeypatch.setattr(review_page_module, "open_image", lambda value, _parent: opened.append(Path(value)))
     page = ReviewPage(ReviewController(cases)); qtbot.addWidget(page); page.load_next()
+    qtbot.waitUntil(lambda: page.reviews_list.count() == 1)
     page.reviews_list.itemDoubleClicked.emit(page.reviews_list.item(0))
     assert opened == [path]
+
+def test_results_adds_large_photo_collection_in_ui_batches(qtbot):
+    photos = [Path(f"{index}.jpg") for index in range(500)]
+    page = ResultsPage(Results(photos)); qtbot.addWidget(page); page.select_task("t1")
+    page.select_person("p1")
+    assert page.photos_list.count() < 500
+    qtbot.waitUntil(lambda: page.photos_list.count() == 500, timeout=5000)
+
+def test_review_adds_large_pending_collection_in_ui_batches(qtbot):
+    cases = [
+        {"face_id":f"f{index}", "photo_path":Path(f"{index}.jpg"), "box":[0,0,1,1], "candidates":[]}
+        for index in range(500)
+    ]
+    page = ReviewPage(ReviewController(cases)); qtbot.addWidget(page); page.load_next()
+    assert page.reviews_list.count() < 500
+    qtbot.waitUntil(lambda: page.reviews_list.count() == 500, timeout=5000)

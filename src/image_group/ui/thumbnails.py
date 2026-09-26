@@ -83,12 +83,7 @@ class AsyncThumbnailLoader(QObject):
 
     def request(self, path: Path, size: QSize, request_key):
         path = Path(path)
-        try:
-            stat = path.stat()
-            identity = (stat.st_mtime_ns, stat.st_size)
-        except OSError:
-            identity = None
-        cache_key = (str(path), size.width(), size.height(), identity)
+        cache_key = (str(path), size.width(), size.height())
         cached = self.cache.get(cache_key)
         if cached is not None:
             self.cache.move_to_end(cache_key)

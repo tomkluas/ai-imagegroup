@@ -1,4 +1,5 @@
 import threading
+import time
 from pathlib import Path
 
 from PySide6.QtCore import QSize
@@ -55,3 +56,24 @@ def test_thumbnail_loader_discards_results_from_previous_batch(qtbot, monkeypatc
 
     qtbot.waitUntil(lambda: delivered == ["new"], timeout=2000)
     assert "old" not in delivered
+
+
+def test_thumbnail_request_does_not_stat_on_ui_thread(monkeypatch):
+    release = threading.Event()
+    original_stat = Path.stat
+
+    def slow_stat(path, *args, **kwargs):
+        if path.name == "slow.jpg":
+            release.wait(timeout=1)
+        return original_stat(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "stat", slow_stat)
+    timer = threading.Timer(.3, release.set)
+    timer.start()
+    loader = thumbnails.AsyncThumbnailLoader(max_workers=1)
+    loader.begin_batch()
+    started = time.monotonic()
+    loader.request(Path("slow.jpg"), QSize(160, 120), "slow")
+    elapsed = time.monotonic() - started
+    release.set(); timer.join()
+    assert elapsed < .15

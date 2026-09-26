@@ -1,6 +1,7 @@
+from collections import deque
 from pathlib import Path
 
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QSize, Qt, QTimer
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import (
     QHBoxLayout,
@@ -20,12 +21,16 @@ from image_group.ui.thumbnails import AsyncThumbnailLoader, placeholder_pixmap
 class ReviewPage(QWidget):
     thumbnail_size = QSize(150, 110)
     preview_size = QSize(720, 440)
+    batch_size = 24
+    batch_delay_ms = 8
 
     def __init__(self, controller):
         super().__init__()
         self.controller = controller
         self.face_id = None
         self.review_cases = {}
+        self.review_batch = deque()
+        self.review_batch_generation = 0
         self.current_photo_path = None
         self.list_loader = AsyncThumbnailLoader(self)
         self.preview_loader = AsyncThumbnailLoader(self, max_workers=1, cache_limit=32)
@@ -74,26 +79,44 @@ class ReviewPage(QWidget):
     def load_next(self):
         self.list_loader.begin_batch()
         self.preview_loader.begin_batch()
+        self.review_batch_generation += 1
         cases = self.controller.pending_reviews() if hasattr(self.controller, "pending_reviews") else []
         self.review_cases = {case["face_id"]: case for case in cases}
         self.reviews_list.blockSignals(True)
         self.reviews_list.clear()
-        for index, case in enumerate(cases, 1):
+        self.reviews_list.blockSignals(False)
+        self.review_batch = deque(cases)
+        generation = self.review_batch_generation
+        if self.review_batch:
+            self._clear_details()
+            QTimer.singleShot(0, lambda: self._append_review_batch(generation))
+        else:
+            self._clear_details()
+
+    def _append_review_batch(self, generation):
+        if generation != self.review_batch_generation:
+            return
+        select_first = self.reviews_list.count() == 0
+        for _ in range(min(self.batch_size, len(self.review_batch))):
+            case = self.review_batch.popleft()
+            index = self.reviews_list.count()
             path = Path(case["photo_path"])
-            item = QListWidgetItem(QIcon(self.loading_thumbnail), f"{path.name}\n待确认 {index}")
+            item = QListWidgetItem(
+                QIcon(self.loading_thumbnail), f"{path.name}\n待确认 {index + 1}"
+            )
             item.setData(Qt.UserRole, case["face_id"])
             item.setData(Qt.UserRole + 1, str(path))
             item.setToolTip(f"正在加载：{path}")
             self.reviews_list.addItem(item)
             self.list_loader.request(
-                path, self.thumbnail_size, (index - 1, case["face_id"], str(path))
+                path, self.thumbnail_size, (index, case["face_id"], str(path))
             )
-        self.reviews_list.blockSignals(False)
-
-        if self.reviews_list.count():
+        if select_first and self.reviews_list.count():
             self.reviews_list.setCurrentRow(0)
-        else:
-            self._clear_details()
+        if self.review_batch:
+            QTimer.singleShot(
+                self.batch_delay_ms, lambda: self._append_review_batch(generation)
+            )
 
     def _review_selected(self, current, _previous=None):
         if current is None:

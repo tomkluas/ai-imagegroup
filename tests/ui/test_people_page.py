@@ -41,6 +41,7 @@ def test_references_are_one_thumbnail_grid_without_separate_preview(qtbot, tmp_p
     service = Service(); service.people = [Person("p1", "张小明")]
     service.database = Database([("r1", str(path))])
     page = PeoplePage(service); qtbot.addWidget(page); page.people_list.setCurrentRow(0)
+    qtbot.waitUntil(lambda: page.references.count() == 1)
     assert page.references.viewMode() == QListView.IconMode
     assert page.references.count() == 1
     assert not hasattr(page, "preview")
@@ -52,5 +53,6 @@ def test_double_click_reference_opens_original_image(qtbot, monkeypatch, tmp_pat
     opened = []
     monkeypatch.setattr(people_page_module, "open_image", lambda value, _parent: opened.append(Path(value)))
     page = PeoplePage(service); qtbot.addWidget(page); page.people_list.setCurrentRow(0)
+    qtbot.waitUntil(lambda: page.references.count() == 1)
     page.references.itemDoubleClicked.emit(page.references.item(0))
     assert opened == [path]
