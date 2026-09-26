@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from image_group.ui.thumbnails import load_thumbnail
+from image_group.ui.thumbnails import AsyncThumbnailLoader, placeholder_pixmap
 
 
 class ReviewPage(QWidget):
@@ -25,6 +25,13 @@ class ReviewPage(QWidget):
         self.controller = controller
         self.face_id = None
         self.review_cases = {}
+        self.current_photo_path = None
+        self.list_loader = AsyncThumbnailLoader(self)
+        self.preview_loader = AsyncThumbnailLoader(self, max_workers=1, cache_limit=32)
+        self.list_loader.loaded.connect(self._list_thumbnail_loaded)
+        self.preview_loader.loaded.connect(self._preview_loaded)
+        self.loading_thumbnail = placeholder_pixmap(self.thumbnail_size, "正在加载")
+        self.loading_preview = placeholder_pixmap(self.preview_size, "正在加载")
 
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel("待人工确认"))
@@ -63,17 +70,22 @@ class ReviewPage(QWidget):
         self.skip_button.clicked.connect(self.skip)
 
     def load_next(self):
+        self.list_loader.begin_batch()
+        self.preview_loader.begin_batch()
         cases = self.controller.pending_reviews() if hasattr(self.controller, "pending_reviews") else []
         self.review_cases = {case["face_id"]: case for case in cases}
         self.reviews_list.blockSignals(True)
         self.reviews_list.clear()
         for index, case in enumerate(cases, 1):
             path = Path(case["photo_path"])
-            pixmap, available = load_thumbnail(path, self.thumbnail_size)
-            item = QListWidgetItem(QIcon(pixmap), f"{path.name}\n待确认 {index}")
+            item = QListWidgetItem(QIcon(self.loading_thumbnail), f"{path.name}\n待确认 {index}")
             item.setData(Qt.UserRole, case["face_id"])
-            item.setToolTip(str(path) if available else f"图片不可用：{path}")
+            item.setData(Qt.UserRole + 1, str(path))
+            item.setToolTip(f"正在加载：{path}")
             self.reviews_list.addItem(item)
+            self.list_loader.request(
+                path, self.thumbnail_size, (index - 1, case["face_id"], str(path))
+            )
         self.reviews_list.blockSignals(False)
 
         if self.reviews_list.count():
@@ -90,15 +102,20 @@ class ReviewPage(QWidget):
 
     def _clear_details(self):
         self.face_id = None
+        self.current_photo_path = None
         self.photo_label.setText("暂无待确认照片")
         self.photo_label.setPixmap(QPixmap())
         self.candidates.clear()
 
     def show_case(self, face_id, photo_path: Path, candidates):
         self.face_id = face_id
-        pixmap, available = load_thumbnail(photo_path, self.preview_size)
-        self.photo_label.setPixmap(pixmap)
-        self.photo_label.setToolTip(str(photo_path) if available else f"图片不可用：{photo_path}")
+        self.current_photo_path = str(photo_path)
+        self.preview_loader.begin_batch()
+        self.photo_label.setPixmap(self.loading_preview)
+        self.photo_label.setToolTip(f"正在加载：{photo_path}")
+        self.preview_loader.request(
+            photo_path, self.preview_size, (face_id, self.current_photo_path)
+        )
         self.candidates.clear()
         for person_id, name, score in candidates:
             item = QListWidgetItem(f"{name}  {score:.0%}")
@@ -106,6 +123,29 @@ class ReviewPage(QWidget):
             self.candidates.addItem(item)
         if self.candidates.count():
             self.candidates.setCurrentRow(0)
+
+    def _list_thumbnail_loaded(self, request_key, image, available):
+        index, face_id, path = request_key
+        if index >= self.reviews_list.count():
+            return
+        item = self.reviews_list.item(index)
+        if item.data(Qt.UserRole) != face_id or item.data(Qt.UserRole + 1) != path:
+            return
+        pixmap = QPixmap.fromImage(image) if available else placeholder_pixmap(
+            self.thumbnail_size
+        )
+        item.setIcon(QIcon(pixmap))
+        item.setToolTip(path if available else f"图片不可用：{path}")
+
+    def _preview_loaded(self, request_key, image, available):
+        face_id, path = request_key
+        if self.face_id != face_id or self.current_photo_path != path:
+            return
+        pixmap = QPixmap.fromImage(image) if available else placeholder_pixmap(
+            self.preview_size
+        )
+        self.photo_label.setPixmap(pixmap)
+        self.photo_label.setToolTip(path if available else f"图片不可用：{path}")
 
     def confirm(self):
         item = self.candidates.currentItem()

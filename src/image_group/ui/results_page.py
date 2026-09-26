@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 from PySide6.QtCore import QSize, Qt
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import (
     QComboBox,
     QHBoxLayout,
@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from image_group.ui.thumbnails import load_thumbnail
+from image_group.ui.thumbnails import AsyncThumbnailLoader, placeholder_pixmap
 
 
 class ResultsPage(QWidget):
@@ -26,6 +26,9 @@ class ResultsPage(QWidget):
         self.service = service
         self.task_id = None
         self.output_root = None
+        self.thumbnail_loader = AsyncThumbnailLoader(self)
+        self.thumbnail_loader.loaded.connect(self._thumbnail_loaded)
+        self.loading_pixmap = placeholder_pixmap(self.thumbnail_size, "正在加载")
 
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel("分类结果"))
@@ -67,6 +70,7 @@ class ResultsPage(QWidget):
             self.select_task(task["id"])
 
     def select_task(self, task_id):
+        self.thumbnail_loader.begin_batch()
         self.task_id = task_id
         self.people_list.clear()
         self.photos_list.clear()
@@ -76,15 +80,30 @@ class ResultsPage(QWidget):
             self.people_list.addItem(item)
 
     def select_person(self, person_id):
+        self.thumbnail_loader.begin_batch()
         self.photos_list.clear()
-        for value in self.service.list_photos(self.task_id, person_id):
+        for index, value in enumerate(self.service.list_photos(self.task_id, person_id)):
             path = Path(value)
-            pixmap, available = load_thumbnail(path, self.thumbnail_size)
-            item = QListWidgetItem(QIcon(pixmap), path.name)
+            item = QListWidgetItem(QIcon(self.loading_pixmap), path.name)
             item.setData(Qt.UserRole, str(path))
-            item.setData(Qt.UserRole + 1, available)
-            item.setToolTip(str(path) if available else f"图片不可用：{path}")
+            item.setData(Qt.UserRole + 1, None)
+            item.setToolTip(f"正在加载：{path}")
             self.photos_list.addItem(item)
+            self.thumbnail_loader.request(path, self.thumbnail_size, (index, str(path)))
+
+    def _thumbnail_loaded(self, request_key, image, available):
+        index, path = request_key
+        if index >= self.photos_list.count():
+            return
+        item = self.photos_list.item(index)
+        if item.data(Qt.UserRole) != path:
+            return
+        pixmap = QPixmap.fromImage(image) if available else placeholder_pixmap(
+            self.thumbnail_size
+        )
+        item.setIcon(QIcon(pixmap))
+        item.setData(Qt.UserRole + 1, available)
+        item.setToolTip(path if available else f"图片不可用：{path}")
 
     def _person_changed(self):
         item = self.people_list.currentItem()

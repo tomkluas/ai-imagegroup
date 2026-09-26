@@ -1,8 +1,12 @@
+import threading
+import time
 from pathlib import Path
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import QListView
 
+from image_group.ui import thumbnails
 from image_group.ui.new_task_page import NewTaskPage
 from image_group.ui.results_page import ResultsPage
 from image_group.ui.review_page import ReviewPage
@@ -44,13 +48,13 @@ def test_results_loads_people_and_photos(qtbot):
 
 def test_results_shows_thumbnail_grid_and_placeholder_for_missing_photo(qtbot, tmp_path):
     existing = tmp_path / "existing.png"
-    from PySide6.QtGui import QPixmap
     pixmap = QPixmap(40, 30); pixmap.fill(Qt.red); assert pixmap.save(str(existing))
     page = ResultsPage(Results([existing, tmp_path / "missing.png"])); qtbot.addWidget(page)
     page.select_task("t1"); page.select_person("p1")
     assert page.photos_list.viewMode() == QListView.IconMode
     assert not page.photos_list.item(0).icon().isNull()
     assert not page.photos_list.item(1).icon().isNull()
+    qtbot.waitUntil(lambda: page.photos_list.item(1).data(Qt.UserRole + 1) is False)
     assert "不可用" in page.photos_list.item(1).toolTip()
 
 def test_review_lists_pending_photos_and_confirms_selected_item(qtbot, tmp_path):
@@ -67,3 +71,28 @@ def test_review_lists_pending_photos_and_confirms_selected_item(qtbot, tmp_path)
     qtbot.mouseClick(page.confirm_button, Qt.LeftButton)
     assert controller.confirmed == ("f2", "p2")
     assert page.reviews_list.count() == 1 and page.face_id == "f1"
+
+def test_results_returns_before_slow_thumbnail_decode_finishes(qtbot, monkeypatch, tmp_path):
+    release = threading.Event()
+    def slow_read(_path: Path, size: QSize):
+        release.wait(timeout=1)
+        return QImage(size, QImage.Format_RGB32), True
+    monkeypatch.setattr(thumbnails, "read_thumbnail_image", slow_read)
+    timer = threading.Timer(.3, release.set); timer.start()
+    page = ResultsPage(Results([tmp_path / "large.jpg"])); qtbot.addWidget(page); page.select_task("t1")
+    started = time.monotonic(); page.select_person("p1"); elapsed = time.monotonic() - started
+    assert elapsed < .15 and page.photos_list.count() == 1
+    release.set(); timer.join()
+
+def test_review_returns_before_slow_thumbnail_decode_finishes(qtbot, monkeypatch, tmp_path):
+    release = threading.Event()
+    def slow_read(_path: Path, size: QSize):
+        release.wait(timeout=1)
+        return QImage(size, QImage.Format_RGB32), True
+    monkeypatch.setattr(thumbnails, "read_thumbnail_image", slow_read)
+    cases = [{"face_id":"f1", "photo_path":tmp_path / "large.jpg", "box":[0,0,1,1], "candidates":[("p1", "张小明", .62)]}]
+    timer = threading.Timer(.3, release.set); timer.start()
+    page = ReviewPage(ReviewController(cases)); qtbot.addWidget(page)
+    started = time.monotonic(); page.load_next(); elapsed = time.monotonic() - started
+    assert elapsed < .15 and page.reviews_list.count() == 1
+    release.set(); timer.join()
