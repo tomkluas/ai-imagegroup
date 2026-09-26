@@ -4,6 +4,7 @@ from pathlib import Path
 from PySide6.QtCore import QSize, Qt, QTimer
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import (
+    QFrame,
     QHBoxLayout,
     QLabel,
     QListView,
@@ -40,22 +41,38 @@ class ReviewPage(QWidget):
         self.loading_preview = placeholder_pixmap(self.preview_size, "正在加载")
 
         layout = QVBoxLayout(self)
-        layout.addWidget(QLabel("待人工确认"))
+        layout.setContentsMargins(18, 14, 18, 10)
+        layout.setSpacing(12)
+        title = QLabel("待人工确认")
+        title.setObjectName("pageTitle")
+        layout.addWidget(title)
         body = QHBoxLayout()
+        body.setSpacing(14)
 
         self.reviews_list = QListWidget()
+        self.reviews_list.setMinimumWidth(220)
+        self.reviews_list.setMaximumWidth(260)
         self.reviews_list.setViewMode(QListView.IconMode)
         self.reviews_list.setIconSize(self.thumbnail_size)
         self.reviews_list.setGridSize(QSize(180, 155))
         self.reviews_list.setResizeMode(QListView.Adjust)
         self.reviews_list.setWordWrap(True)
-        body.addWidget(self.reviews_list, 2)
+        self.reviews_list.setStyleSheet("QListWidget{padding:8px;}")
+        body.addWidget(self.reviews_list)
 
-        details = QVBoxLayout()
+        body.addStretch(1)
+        self.detail_card = QFrame()
+        self.detail_card.setObjectName("reviewDetailCard")
+        self.detail_card.setMinimumWidth(480)
+        self.detail_card.setMaximumWidth(640)
+        details = QVBoxLayout(self.detail_card)
+        details.setContentsMargins(12, 10, 12, 10)
+        details.setSpacing(10)
         self.photo_label = QLabel("暂无待确认照片")
         self.photo_label.setAlignment(Qt.AlignCenter)
-        self.photo_label.setMinimumHeight(360)
-        details.addWidget(self.photo_label, 3)
+        self.photo_label.setMinimumSize(480, 350)
+        self.photo_label.setMaximumHeight(460)
+        details.addWidget(self.photo_label, 1, Qt.AlignCenter)
         details.addWidget(QLabel("请选择最符合的姓名："))
         self.candidates = QListWidget()
         details.addWidget(self.candidates, 1)
@@ -67,8 +84,14 @@ class ReviewPage(QWidget):
         for button in (self.confirm_button, self.reject_button, self.skip_button):
             row.addWidget(button)
         details.addLayout(row)
-        body.addLayout(details, 3)
+        body.addWidget(self.detail_card)
+        body.addStretch(1)
         layout.addLayout(body)
+
+        self.setStyleSheet(
+            "QFrame#reviewDetailCard{background:#ffffff;border:1px solid #e2e5ea;"
+            "border-radius:8px;}"
+        )
 
         self.reviews_list.currentItemChanged.connect(self._review_selected)
         self.reviews_list.itemDoubleClicked.connect(self._open_review_photo)

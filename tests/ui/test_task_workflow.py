@@ -39,6 +39,19 @@ def test_new_task_requires_input_output_and_people(qtbot, tmp_path):
     assert not page.start_button.isEnabled()
     page.set_input_paths([tmp_path / "photos"]); page.set_output_directory(tmp_path / "out"); page.people_list.item(0).setCheckState(Qt.Checked)
     page.refresh_validity(); assert page.start_button.isEnabled()
+
+def test_new_task_uses_grouped_task_settings_layout(qtbot):
+    page = NewTaskPage(Scanner(), Controller(), [("p1", "张小明")]); qtbot.addWidget(page)
+    assert page.title.objectName() == "pageTitle"
+    assert page.task_group.title() == "任务设置"
+    assert page.input_label.wordWrap() and page.output_label.wordWrap()
+
+def test_review_queue_is_narrow_and_preview_is_centered(qtbot):
+    page = ReviewPage(Controller()); qtbot.addWidget(page)
+    assert page.reviews_list.maximumWidth() == 260
+    assert page.detail_card.maximumWidth() == 640
+    assert page.photo_label.alignment() & Qt.AlignHCenter
+    assert page.photo_label.alignment() & Qt.AlignVCenter
 def test_review_confirms_selected_candidate(qtbot):
     controller = Controller(); page = ReviewPage(controller); qtbot.addWidget(page)
     page.show_case("f1", Path("photo.jpg"), [("p1", "张小明", .62), ("p2", "李小红", .40)])
