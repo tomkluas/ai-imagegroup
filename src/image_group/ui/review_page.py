@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from image_group.ui.image_actions import open_image
 from image_group.ui.thumbnails import AsyncThumbnailLoader, placeholder_pixmap
 
 
@@ -65,6 +66,7 @@ class ReviewPage(QWidget):
         layout.addLayout(body)
 
         self.reviews_list.currentItemChanged.connect(self._review_selected)
+        self.reviews_list.itemDoubleClicked.connect(self._open_review_photo)
         self.confirm_button.clicked.connect(self.confirm)
         self.reject_button.clicked.connect(self.reject)
         self.skip_button.clicked.connect(self.skip)
@@ -162,3 +164,6 @@ class ReviewPage(QWidget):
         if self.face_id and hasattr(self.controller, "skip"):
             self.controller.skip(self.face_id)
             self.load_next()
+
+    def _open_review_photo(self, item):
+        open_image(item.data(Qt.UserRole + 1), self)

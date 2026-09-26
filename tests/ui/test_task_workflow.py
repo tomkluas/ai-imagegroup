@@ -6,6 +6,8 @@ from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import QListView
 
+from image_group.ui import results_page as results_page_module
+from image_group.ui import review_page as review_page_module
 from image_group.ui import thumbnails
 from image_group.ui.new_task_page import NewTaskPage
 from image_group.ui.results_page import ResultsPage
@@ -96,3 +98,18 @@ def test_review_returns_before_slow_thumbnail_decode_finishes(qtbot, monkeypatch
     started = time.monotonic(); page.load_next(); elapsed = time.monotonic() - started
     assert elapsed < .15 and page.reviews_list.count() == 1
     release.set(); timer.join()
+
+def test_double_click_result_opens_original_image(qtbot, monkeypatch, tmp_path):
+    path = tmp_path / "result.jpg"; opened = []
+    monkeypatch.setattr(results_page_module, "open_image", lambda value, _parent: opened.append(Path(value)))
+    page = ResultsPage(Results([path])); qtbot.addWidget(page); page.select_task("t1"); page.select_person("p1")
+    page.photos_list.itemDoubleClicked.emit(page.photos_list.item(0))
+    assert opened == [path]
+
+def test_double_click_review_opens_original_image(qtbot, monkeypatch, tmp_path):
+    path = tmp_path / "review.jpg"; opened = []
+    cases = [{"face_id":"f1", "photo_path":path, "box":[0,0,1,1], "candidates":[]}]
+    monkeypatch.setattr(review_page_module, "open_image", lambda value, _parent: opened.append(Path(value)))
+    page = ReviewPage(ReviewController(cases)); qtbot.addWidget(page); page.load_next()
+    page.reviews_list.itemDoubleClicked.emit(page.reviews_list.item(0))
+    assert opened == [path]

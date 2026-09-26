@@ -1,8 +1,11 @@
 from dataclasses import dataclass
+from pathlib import Path
 
 from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QListView
 
 from image_group.hardware.profile import HardwareProfile
+from image_group.ui import people_page as people_page_module
 from image_group.ui.main_window import MainWindow
 from image_group.ui.people_page import PeoplePage
 from image_group.ui.settings_page import SettingsPage
@@ -15,6 +18,9 @@ class Service:
     def create_person(self, name):
         person = Person(str(len(self.people)), name); self.people.append(person); return person
     def list_people(self): return list(self.people)
+class Database:
+    def __init__(self, rows): self.rows = rows
+    def execute(self, _query, _parameters): return list(self.rows)
 class Profiler:
     def detect(self): return HardwareProfile(2, 8, 4, False)
 
@@ -29,3 +35,22 @@ def test_main_window_has_five_navigation_items(qtbot):
 def test_settings_page_displays_detected_hardware(qtbot):
     page = SettingsPage(Profiler()); qtbot.addWidget(page)
     assert "2 核" in page.hardware_label.text() and "8 GB" in page.hardware_label.text()
+
+def test_references_are_one_thumbnail_grid_without_separate_preview(qtbot, tmp_path):
+    path = tmp_path / "reference.jpg"
+    service = Service(); service.people = [Person("p1", "张小明")]
+    service.database = Database([("r1", str(path))])
+    page = PeoplePage(service); qtbot.addWidget(page); page.people_list.setCurrentRow(0)
+    assert page.references.viewMode() == QListView.IconMode
+    assert page.references.count() == 1
+    assert not hasattr(page, "preview")
+
+def test_double_click_reference_opens_original_image(qtbot, monkeypatch, tmp_path):
+    path = tmp_path / "reference.jpg"
+    service = Service(); service.people = [Person("p1", "张小明")]
+    service.database = Database([("r1", str(path))])
+    opened = []
+    monkeypatch.setattr(people_page_module, "open_image", lambda value, _parent: opened.append(Path(value)))
+    page = PeoplePage(service); qtbot.addWidget(page); page.people_list.setCurrentRow(0)
+    page.references.itemDoubleClicked.emit(page.references.item(0))
+    assert opened == [path]

@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from image_group.ui.image_actions import open_image
 from image_group.ui.thumbnails import AsyncThumbnailLoader, placeholder_pixmap
 
 
@@ -50,6 +51,7 @@ class ResultsPage(QWidget):
         self.open_button = QPushButton("打开输出文件夹")
         layout.addWidget(self.open_button)
         self.people_list.itemSelectionChanged.connect(self._person_changed)
+        self.photos_list.itemDoubleClicked.connect(self._open_photo)
         self.tasks.currentIndexChanged.connect(self._task_changed)
         self.open_button.clicked.connect(self._open)
         self.refresh_tasks()
@@ -113,3 +115,6 @@ class ResultsPage(QWidget):
     def _open(self):
         if self.output_root and os.name == "nt":
             os.startfile(self.output_root)
+
+    def _open_photo(self, item):
+        open_image(item.data(Qt.UserRole), self)
