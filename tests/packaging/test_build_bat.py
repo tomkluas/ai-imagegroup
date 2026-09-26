@@ -14,6 +14,7 @@ def _write_fake_uv(directory: Path, *, fail_on: str | None = None) -> None:
         "@echo off\n"
         "echo %*>>uv-calls.txt\n"
         f"{failure}\n"
+        'echo %* | findstr /C:"pytest" >nul && if not exist ".tmp" exit /b 9\n'
         'echo %* | findstr /C:"pyinstaller" >nul && (\n'
         "  if not exist dist mkdir dist\n"
         "  echo executable>dist\\app.exe\n"

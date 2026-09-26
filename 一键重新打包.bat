@@ -26,6 +26,8 @@ if errorlevel 1 goto :failed
 
 echo.
 echo [2/6] Running automated tests...
+if not exist ".tmp" mkdir ".tmp"
+if errorlevel 1 goto :failed
 call uv run --extra dev pytest -q --basetemp .tmp\pytest-build
 if errorlevel 1 goto :failed
 
