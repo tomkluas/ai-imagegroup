@@ -44,13 +44,16 @@ class PeoplePage(QWidget):
         self.name_edit = QLineEdit()
         self.name_edit.setPlaceholderText("输入学生姓名")
         self.add_button = QPushButton("新增学生")
+        self.add_button.setProperty("primaryAction", True)
         row.addWidget(self.name_edit)
         row.addWidget(self.add_button)
         layout.addLayout(row)
 
         body = QHBoxLayout()
         self.people_list = QListWidget()
+        self.people_list.setObjectName("peopleList")
         self.references = QListWidget()
+        self.references.setObjectName("referenceGrid")
         self.references.setViewMode(QListView.IconMode)
         self.references.setIconSize(self.thumbnail_size)
         self.references.setGridSize(QSize(190, 165))
@@ -66,6 +69,8 @@ class PeoplePage(QWidget):
         self.rename_button = QPushButton("重命名")
         self.delete_ref_button = QPushButton("删除参考照")
         self.delete_button = QPushButton("删除学生")
+        self.delete_ref_button.setProperty("dangerAction", True)
+        self.delete_button.setProperty("dangerAction", True)
         for button in (
             self.import_button,
             self.bulk_button,

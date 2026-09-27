@@ -96,6 +96,7 @@ class NewTaskPage(QWidget):
 
         people_header = QHBoxLayout()
         people_title = QLabel("本次参与识别的学生")
+        people_title.setObjectName("sectionTitle")
         people_title.setStyleSheet("font-weight:600;")
         people_header.addWidget(people_title)
         people_header.addStretch(1)
@@ -112,6 +113,7 @@ class NewTaskPage(QWidget):
         buttons.setSpacing(10)
         buttons.addStretch(1)
         self.start_button = QPushButton("开始分类")
+        self.start_button.setProperty("primaryAction", True)
         self.start_button.setMinimumWidth(160)
         self.cancel_button = QPushButton("取消")
         self.cancel_button.setMinimumWidth(120)

@@ -37,13 +37,17 @@ class ResultsPage(QWidget):
         self.loading_pixmap = placeholder_pixmap(self.thumbnail_size, "正在加载")
 
         layout = QVBoxLayout(self)
-        layout.addWidget(QLabel("分类结果"))
+        title = QLabel("分类结果")
+        title.setObjectName("pageTitle")
+        layout.addWidget(title)
         self.tasks = QComboBox()
         layout.addWidget(self.tasks)
 
         body = QHBoxLayout()
         self.people_list = QListWidget()
+        self.people_list.setObjectName("resultPeopleList")
         self.photos_list = QListWidget()
+        self.photos_list.setObjectName("resultPhotoGrid")
         self.photos_list.setViewMode(QListView.IconMode)
         self.photos_list.setIconSize(self.thumbnail_size)
         self.photos_list.setGridSize(QSize(190, 165))

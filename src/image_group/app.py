@@ -21,12 +21,13 @@ from image_group.ui.people_page import PeoplePage
 from image_group.ui.results_page import ResultsPage
 from image_group.ui.review_page import ReviewPage
 from image_group.ui.settings_page import SettingsPage
+from image_group.ui.theme import APP_STYLESHEET
 
 
 def resource_root():return Path(getattr(sys,"_MEIPASS",Path(__file__).parents[2]))
 def default_data_root():return Path(os.environ.get("LOCALAPPDATA",Path.home()))/"ImageGroup"
 def build_main_window(data_root:Path,model_root:Path):
- data_root=Path(data_root);data_root.mkdir(parents=True,exist_ok=True);database=Database(data_root/"data.db");database.migrate();backend=OpenCvRecognitionBackend(model_root);people=PeopleService(database,PersonRepository(database),data_root/"reference",BackendReferenceValidator(backend));controller=ClassificationController(database,backend,ImageLoader());query=ResultQueryService(database);people_page=PeoplePage(people);task_page=NewTaskPage(PhotoScanner(),controller,[(p.id,p.display_name) for p in people.people.list_all()]);controller.progress=task_page.progress_changed.emit;people_page.people_changed.connect(lambda:task_page.set_people([(p.id,p.display_name) for p in people.people.list_all()]));window=MainWindow(people_page,SettingsPage(HardwareProfiler()),task_page,ReviewPage(controller),ResultsPage(query));window.database=database;return window
+ data_root=Path(data_root);data_root.mkdir(parents=True,exist_ok=True);database=Database(data_root/"data.db");database.migrate();backend=OpenCvRecognitionBackend(model_root);people=PeopleService(database,PersonRepository(database),data_root/"reference",BackendReferenceValidator(backend));controller=ClassificationController(database,backend,ImageLoader());query=ResultQueryService(database);people_page=PeoplePage(people);task_page=NewTaskPage(PhotoScanner(),controller,[(p.id,p.display_name) for p in people.people.list_all()]);controller.progress=task_page.progress_changed.emit;people_page.people_changed.connect(lambda:task_page.set_people([(p.id,p.display_name) for p in people.people.list_all()]));window=MainWindow(people_page,SettingsPage(HardwareProfiler()),task_page,ReviewPage(controller),ResultsPage(query));root=window.centralWidget();root.setObjectName("appCanvas");root.layout().setContentsMargins(14,12,14,12);root.layout().setSpacing(14);window.navigation.setObjectName("navigationList");window.navigation.setFixedWidth(180);window.setObjectName("mainWindow");window.setStyleSheet(APP_STYLESHEET);window.database=database;return window
 def main():
  app=QApplication.instance() or QApplication(sys.argv);window=build_main_window(default_data_root(),resource_root()/"resources"/"models");window.show();return app.exec()
 if __name__=="__main__":raise SystemExit(main())

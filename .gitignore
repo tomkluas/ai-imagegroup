@@ -8,4 +8,4 @@ dist/
 .superpowers/
 *.pyc
 *.pyo
-
+.tmp/

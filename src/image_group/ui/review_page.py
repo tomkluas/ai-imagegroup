@@ -50,6 +50,7 @@ class ReviewPage(QWidget):
         body.setSpacing(14)
 
         self.reviews_list = QListWidget()
+        self.reviews_list.setObjectName("reviewQueue")
         self.reviews_list.setMinimumWidth(220)
         self.reviews_list.setMaximumWidth(260)
         self.reviews_list.setViewMode(QListView.IconMode)
@@ -75,11 +76,14 @@ class ReviewPage(QWidget):
         details.addWidget(self.photo_label, 1, Qt.AlignCenter)
         details.addWidget(QLabel("请选择最符合的姓名："))
         self.candidates = QListWidget()
+        self.candidates.setObjectName("candidateList")
         details.addWidget(self.candidates, 1)
 
         row = QHBoxLayout()
         self.confirm_button = QPushButton("确认姓名")
+        self.confirm_button.setProperty("primaryAction", True)
         self.reject_button = QPushButton("不是这些人")
+        self.reject_button.setProperty("dangerAction", True)
         self.skip_button = QPushButton("跳过")
         for button in (self.confirm_button, self.reject_button, self.skip_button):
             row.addWidget(button)
