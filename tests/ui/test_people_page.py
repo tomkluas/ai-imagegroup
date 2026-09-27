@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QListView
+from PySide6.QtWidgets import QInputDialog, QListView
 
 from image_group.hardware.profile import HardwareProfile
 from image_group.ui import people_page as people_page_module
@@ -18,6 +18,10 @@ class Service:
     def create_person(self, name):
         person = Person(str(len(self.people)), name); self.people.append(person); return person
     def list_people(self): return list(self.people)
+    def rename_person(self, person_id, name):
+        person = next(person for person in self.people if person.id == person_id)
+        person.display_name = name
+        return person
 class Database:
     def __init__(self, rows): self.rows = rows
     def execute(self, _query, _parameters): return list(self.rows)
@@ -28,6 +32,22 @@ def test_add_person_refreshes_list(qtbot):
     service = Service(); page = PeoplePage(service); qtbot.addWidget(page); page.show()
     page.name_edit.setText("张小明"); qtbot.mouseClick(page.add_button, Qt.LeftButton)
     assert page.person_names() == ["张小明"]
+
+def test_rename_prompts_with_current_name_and_keeps_person_selected(qtbot, monkeypatch):
+    service = Service(); service.people = [Person("p1", "旧名字")]
+    page = PeoplePage(service); qtbot.addWidget(page); page.people_list.setCurrentRow(0)
+    prompts = []
+
+    def get_text(_parent, title, label, _mode, value):
+        prompts.append((title, label, value))
+        return "新名字", True
+
+    monkeypatch.setattr(QInputDialog, "getText", get_text)
+    qtbot.mouseClick(page.rename_button, Qt.LeftButton)
+
+    assert prompts == [("重命名学生", "请输入新的学生姓名：", "旧名字")]
+    assert page.person_names() == ["新名字"]
+    assert page.people_list.currentItem().data(Qt.UserRole) == "p1"
 def test_main_window_has_five_navigation_items(qtbot):
     service = Service(); window = MainWindow(PeoplePage(service), SettingsPage(Profiler()))
     qtbot.addWidget(window)

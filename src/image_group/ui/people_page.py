@@ -6,6 +6,7 @@ from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import (
     QFileDialog,
     QHBoxLayout,
+    QInputDialog,
     QLabel,
     QLineEdit,
     QListView,
@@ -138,11 +139,30 @@ class PeoplePage(QWidget):
             )
 
     def _rename(self):
-        person_id = self._selected_id()
-        if person_id and self.name_edit.text().strip():
-            self.service.rename_person(person_id, self.name_edit.text())
+        item = self.people_list.currentItem()
+        if item is None:
+            return
+        person_id = item.data(Qt.UserRole)
+        name, accepted = QInputDialog.getText(
+            self,
+            "重命名学生",
+            "请输入新的学生姓名：",
+            QLineEdit.Normal,
+            item.text(),
+        )
+        if not accepted:
+            return
+        try:
+            self.service.rename_person(person_id, name)
             self.refresh()
+            for index in range(self.people_list.count()):
+                candidate = self.people_list.item(index)
+                if candidate.data(Qt.UserRole) == person_id:
+                    self.people_list.setCurrentItem(candidate)
+                    break
             self.people_changed.emit()
+        except Exception as exc:
+            QMessageBox.warning(self, "无法重命名", str(exc))
 
     def _delete(self):
         person_id = self._selected_id()
